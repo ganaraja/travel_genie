@@ -1,0 +1,12 @@
+# Google Agent Development Kit
+google-adk>=1.0.0
+
+# FastMCP for tool definition and serving
+fastmcp>=0.9.0
+
+# Core dependencies
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Optional: for running MCP server
+uvicorn>=0.24.0
