@@ -1,0 +1,228 @@
+.message {
+  display: flex;
+  gap: 0.75rem;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-message {
+  flex-direction: row-reverse;
+  align-self: flex-end;
+}
+
+.assistant-message {
+  flex-direction: row;
+  align-self: flex-start;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.user-avatar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.assistant-avatar {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.message-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 80%;
+}
+
+.user-message .message-content {
+  align-items: flex-end;
+}
+
+.assistant-message .message-content {
+  align-items: flex-start;
+}
+
+.message-bubble {
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.user-message .message-bubble {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.assistant-message .message-bubble {
+  background: #f7f7f8;
+  color: #333;
+  border-bottom-left-radius: 4px;
+}
+
+.error-bubble {
+  background: #fff5f5 !important;
+  border: 2px solid #ff6b6b;
+  color: #d63031 !important;
+}
+
+.message-time {
+  font-size: 0.75rem;
+  color: #999;
+  padding: 0 0.5rem;
+}
+
+.recommendation-text p {
+  margin: 0.5rem 0;
+}
+
+.recommendation-text p:first-child {
+  margin-top: 0;
+}
+
+.recommendation-text p:last-child {
+  margin-bottom: 0;
+}
+
+.highlight-primary {
+  font-weight: 600;
+  color: #667eea;
+  padding: 0.5rem;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 6px;
+  margin: 0.75rem 0 !important;
+}
+
+.highlight-secondary {
+  font-weight: 600;
+  color: #f5576c;
+  padding: 0.5rem;
+  background: rgba(245, 87, 108, 0.1);
+  border-radius: 6px;
+  margin: 0.75rem 0 !important;
+}
+
+.highlight-warning {
+  font-weight: 600;
+  color: #f39c12;
+  padding: 0.5rem;
+  background: rgba(243, 156, 18, 0.1);
+  border-radius: 6px;
+  margin: 0.75rem 0 !important;
+}
+
+.info-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.info-card {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: white;
+  border-radius: 10px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.2s ease;
+}
+
+.info-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+}
+
+.visa-card {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea08 0%, #764ba208 100%);
+}
+
+.visa-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.25);
+}
+
+.weather-card {
+  border-color: #ffd93d;
+}
+
+.weather-card:hover {
+  border-color: #ffc107;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.2);
+}
+
+.flight-card {
+  border-color: #6bcf7f;
+}
+
+.flight-card:hover {
+  border-color: #4caf50;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+}
+
+.hotel-card {
+  border-color: #ff9ff3;
+}
+
+.hotel-card:hover {
+  border-color: #e91e63;
+  box-shadow: 0 2px 8px rgba(233, 30, 99, 0.2);
+}
+
+.card-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.25rem;
+}
+
+.card-text {
+  font-size: 0.85rem;
+  color: #333;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .message-content {
+    max-width: 85%;
+  }
+  
+  .message-bubble {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .info-cards {
+    grid-template-columns: 1fr;
+  }
+}

@@ -6,80 +6,60 @@ function RecommendationDisplay({ recommendation }) {
     return null;
   }
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Travel Genie Recommendation',
+        text: recommendation.recommendation,
+      }).catch(() => {
+        // Fallback to copy
+        handleCopy();
+      });
+    } else {
+      handleCopy();
+    }
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(recommendation.recommendation);
+    alert('Recommendation copied to clipboard!');
+  };
+
+  const handleNewSearch = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <div className="RecommendationDisplay">
       <div className="recommendation-header">
-        <h2>✨ Your Personalized Recommendation</h2>
-        <div className="recommended-dates">
-          <span className="date-label">Recommended Travel Dates:</span>
-          <span className="date-range">
-            {formatDate(recommendation.recommended_start)} - {formatDate(recommendation.recommended_end)}
-          </span>
+        <div className="recommendation-icon">✨</div>
+        <div className="recommendation-title">
+          <h3>Your Personalized Recommendation</h3>
+          <p className="recommendation-query">"{recommendation.query}"</p>
         </div>
       </div>
 
       <div className="recommendation-content">
-        <section className="reasoning-section">
-          <h3>Why This Recommendation Fits You</h3>
-          {recommendation.primary_reasoning && recommendation.primary_reasoning.length > 0 ? (
-            <ul className="reasoning-list">
-              {recommendation.primary_reasoning.map((reason, index) => (
-                <li key={index} className={`reason-item ${reason.positive ? 'positive' : 'negative'}`}>
-                  <strong>{reason.factor}:</strong> {reason.assessment}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No specific reasoning provided.</p>
+        {recommendation.recommendation}
+      </div>
+
+      <div className="recommendation-footer">
+        <div className="recommendation-timestamp">
+          {recommendation.timestamp && (
+            <>Generated on {new Date(recommendation.timestamp).toLocaleString()}</>
           )}
-        </section>
-
-        <section className="summary-section">
-          <h3>Summary</h3>
-          <p className="summary-text">{recommendation.personalized_summary}</p>
-        </section>
-
-        {recommendation.alternative_options && recommendation.alternative_options.length > 0 && (
-          <section className="alternatives-section">
-            <h3>Alternative Options</h3>
-            <ul className="alternatives-list">
-              {recommendation.alternative_options.map((alt, index) => (
-                <li key={index} className="alternative-item">
-                  <span className="alt-dates">
-                    {formatDate(alt[0])} - {formatDate(alt[1])}
-                  </span>
-                  <span className="alt-reason">{alt[2]}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {recommendation.rejected_periods && recommendation.rejected_periods.length > 0 && (
-          <section className="rejected-section">
-            <h3>Why Other Periods Were Rejected</h3>
-            <ul className="rejected-list">
-              {recommendation.rejected_periods.map((rejected, index) => (
-                <li key={index} className="rejected-item">
-                  <span className="rejected-dates">
-                    {formatDate(rejected[0])} - {formatDate(rejected[1])}
-                  </span>
-                  <span className="rejected-reason">{rejected[2]}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+        </div>
+        <div className="recommendation-actions">
+          <button className="action-button" onClick={handleCopy}>
+            📋 Copy
+          </button>
+          <button className="action-button" onClick={handleShare}>
+            🔗 Share
+          </button>
+          <button className="action-button primary" onClick={handleNewSearch}>
+            🔍 New Search
+          </button>
+        </div>
       </div>
     </div>
   );

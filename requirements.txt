@@ -1,6 +1,9 @@
 # Google Agent Development Kit
 google-adk>=1.0.0
 
+# Google Generative AI (for direct API access)
+google-generativeai>=0.3.0
+
 # FastMCP for tool definition and serving
 fastmcp>=0.9.0
 
@@ -10,3 +13,11 @@ python-dotenv>=1.0.0
 
 # Optional: for running MCP server
 uvicorn>=0.24.0
+
+# API server
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# Flask API server for frontend
+flask>=3.0.0
+flask-cors>=4.0.0

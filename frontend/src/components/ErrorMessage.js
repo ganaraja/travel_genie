@@ -1,13 +1,29 @@
 import React from 'react';
 import './ErrorMessage.css';
 
-function ErrorMessage({ message }) {
+function ErrorMessage({ message, onRetry }) {
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
   return (
-    <div className="ErrorMessage" data-testid="error-message">
-      <div className="error-icon">⚠️</div>
-      <div className="error-content">
-        <h3>Error</h3>
-        <p>{message}</p>
+    <div className="ErrorMessage">
+      <div className="error-header">
+        <span className="error-icon">⚠️</span>
+        <h3 className="error-title">Oops! Something went wrong</h3>
+      </div>
+      
+      <p className="error-message">{message}</p>
+      
+      <div className="error-actions">
+        {onRetry && (
+          <button className="error-button primary" onClick={onRetry}>
+            🔄 Try Again
+          </button>
+        )}
+        <button className="error-button" onClick={handleRefresh}>
+          ↻ Refresh Page
+        </button>
       </div>
     </div>
   );
