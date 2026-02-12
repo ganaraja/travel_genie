@@ -210,10 +210,10 @@ def search_hotels_tool(
 
 
 # Create function tools for the agent
-get_user_profile_fn = FunctionTool.from_function(get_user_profile_tool)
-get_weather_forecast_fn = FunctionTool.from_function(get_weather_forecast_tool)
-search_flights_fn = FunctionTool.from_function(search_flights_tool)
-search_hotels_fn = FunctionTool.from_function(search_hotels_tool)
+get_user_profile_fn = FunctionTool(get_user_profile_tool)
+get_weather_forecast_fn = FunctionTool(get_weather_forecast_tool)
+search_flights_fn = FunctionTool(search_flights_tool)
+search_hotels_fn = FunctionTool(search_hotels_tool)
 
 
 # Create the root agent
