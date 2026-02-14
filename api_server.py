@@ -13,6 +13,116 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend
 
 
+def extract_all_destinations(query, destinations_map):
+    """
+    Extract all destinations mentioned in a query.
+    Returns list of (city, country, airport_code) tuples.
+    """
+    query_lower = query.lower()
+    found_destinations = []
+    
+    # Sort by key length (longest first) to match more specific terms before shorter ones
+    for key in sorted(destinations_map.keys(), key=len, reverse=True):
+        if key in query_lower:
+            city, country, airport = destinations_map[key]
+            # Avoid duplicates (e.g., "new delhi" and "delhi")
+            if not any(d[0] == city for d in found_destinations):
+                found_destinations.append((city, country, airport))
+    
+    return found_destinations
+
+
+def get_multi_destination_comparison(query, user_id, destinations_list, profile):
+    """
+    Generate a comparison between multiple destinations.
+    """
+    from agent.coordinator import (
+        get_weather_forecast_tool,
+        search_flights_tool,
+        search_hotels_tool
+    )
+    
+    today = date.today()
+    dep_date = (today + timedelta(days=14)).isoformat()
+    ret_date = (today + timedelta(days=21)).isoformat()
+    
+    comparison = f"""I'll compare these destinations for you:\n\n"""
+    
+    for i, (dest_name, dest_country, airport_code) in enumerate(destinations_list, 1):
+        # Get data for this destination
+        weather = get_weather_forecast_tool(dest_name)
+        flights = search_flights_tool("SFO", airport_code, dep_date, ret_date, profile['flexibility_days'])
+        hotels = search_hotels_tool(dest_name, dep_date, ret_date, profile['preferred_brands'])
+        
+        # Get visa info
+        visa_info = check_visa_requirements(dest_country, profile['citizenship'])
+        if visa_info['required']:
+            visa_status = f"⚠️ Visa required ({visa_info.get('type', 'visa')})"
+        else:
+            visa_status = "✅ No visa required"
+        
+        # Extract key metrics
+        avg_temp = sum(p['avg_temp_f'] for p in weather['periods']) / len(weather['periods'])
+        has_storms = any(p['storm_risk'] for p in weather['periods'])
+        min_flight_price = min(f['price_usd'] for f in flights['options']) if flights['options'] else 0
+        flight_duration = flights['options'][0]['total_duration_hours'] if flights['options'] else 0
+        min_hotel_price = min(h['nightly_rate_usd'] for h in hotels['options']) if hotels['options'] else 0
+        
+        # Build comparison entry
+        comparison += f"""{'='*60}
+{i}. {dest_name}, {dest_country}
+{'='*60}
+
+🛂 Visa: {visa_status}
+
+🌤️ Weather: {weather['overall_summary'].split('.')[0]}
+   • Average temperature: {avg_temp:.0f}°F
+   • Storm risk: {"⚠️ Yes" if has_storms else "✅ No"}
+
+✈️ Flights from SFO:
+   • Duration: {flight_duration:.1f} hours
+   • Starting from: ${min_flight_price:.0f}
+   • Airline: {flights['options'][0]['airline'] if flights['options'] else 'N/A'}
+
+🏨 Hotels:
+   • Starting from: ${min_hotel_price:.0f}/night
+   • Options available: {len(hotels['options'])}
+
+"""
+    
+    # Add recommendation summary
+    comparison += f"""\n{'='*60}
+💡 QUICK COMPARISON SUMMARY
+{'='*60}
+
+"""
+    
+    # Compare temperatures
+    temps = [(dest[0], sum(get_weather_forecast_tool(dest[0])['periods'][p]['avg_temp_f'] for p in range(len(get_weather_forecast_tool(dest[0])['periods']))) / len(get_weather_forecast_tool(dest[0])['periods'])) for dest in destinations_list]
+    warmest = max(temps, key=lambda x: x[1])
+    coolest = min(temps, key=lambda x: x[1])
+    comparison += f"🌡️ Warmest: {warmest[0]} ({warmest[1]:.0f}°F) | Coolest: {coolest[0]} ({coolest[1]:.0f}°F)\n"
+    
+    # Compare flight durations
+    flight_data = [(dest[0], search_flights_tool("SFO", dest[2], dep_date, ret_date)['options'][0]['total_duration_hours']) for dest in destinations_list if search_flights_tool("SFO", dest[2], dep_date, ret_date)['options']]
+    if flight_data:
+        shortest = min(flight_data, key=lambda x: x[1])
+        longest = max(flight_data, key=lambda x: x[1])
+        comparison += f"✈️ Shortest flight: {shortest[0]} ({shortest[1]:.1f}h) | Longest: {longest[0]} ({longest[1]:.1f}h)\n"
+    
+    # Compare prices
+    price_data = [(dest[0], min(f['price_usd'] for f in search_flights_tool("SFO", dest[2], dep_date, ret_date)['options'])) for dest in destinations_list if search_flights_tool("SFO", dest[2], dep_date, ret_date)['options']]
+    if price_data:
+        cheapest = min(price_data, key=lambda x: x[1])
+        most_expensive = max(price_data, key=lambda x: x[1])
+        comparison += f"💰 Cheapest flights: {cheapest[0]} (${cheapest[1]:.0f}) | Most expensive: {most_expensive[0]} (${most_expensive[1]:.0f})\n"
+    
+    comparison += f"""\n\n💬 Would you like more details about any specific destination? Just ask!
+"""
+    
+    return comparison
+
+
 def get_travel_recommendation(query, user_id):
     """
     Generate a travel recommendation by calling tools directly.
@@ -119,16 +229,50 @@ def get_travel_recommendation(query, user_id):
         "montreal": ("Montreal", "Canada", "YUL"),
     }
     
-    # Search for destination in query
-    # Sort by key length (longest first) to match more specific terms before shorter ones
+    # Search for destinations in query - check if multiple destinations mentioned
     query_lower = query.lower()
-    for key in sorted(destinations.keys(), key=len, reverse=True):
-        if key in query_lower:
-            city, country, airport = destinations[key]
-            destination = city
-            destination_country = country
-            airport_code = airport
-            break
+    all_destinations = extract_all_destinations(query, destinations)
+    
+    # Check if this is a comparison query (multiple destinations with "or")
+    is_comparison = len(all_destinations) > 1 and (" or " in query_lower or " vs " in query_lower)
+    
+    if is_comparison:
+        # Handle multi-destination comparison
+        return get_multi_destination_comparison(query, user_id, all_destinations, profile)
+    
+    # Single destination query - use first found destination or return error
+    if all_destinations:
+        destination, destination_country, airport_code = all_destinations[0]
+    else:
+        # No destination found - provide helpful message
+        return f"""I couldn't identify a specific destination in your query: "{query}"
+
+I can help you plan trips to many destinations around the world! Here are some examples:
+
+🌴 **Popular Destinations:**
+• Hawaii (Maui)
+• Paris, France
+• Tokyo, Japan
+• Dubai, UAE
+• Bali, Indonesia
+
+🇮🇳 **India:**
+• Mumbai, Bangalore, Delhi
+• Goa, Chennai, Kolkata
+• Hyderabad, Pune, Jaipur
+
+🌍 **Other Destinations:**
+• London, Rome, Barcelona
+• New York, Los Angeles
+• Sydney, Singapore, Bangkok
+
+💡 **Try asking:**
+• "Is it a good time to go to Paris?"
+• "Should I visit Mumbai or Delhi?"
+• "When should I go to Tokyo?"
+• "Best time for Bali vacation?"
+
+What destination would you like to know about?"""
     
     # Step 3: Check visa requirements BEFORE searching flights
     # IMPORTANT: Visa depends on citizenship, not booking location!
@@ -503,7 +647,7 @@ Why this option:
     
     # Add why not section
     expensive_flights = [f for f in flight_options if f['price_usd'] > profile['airfare_budget_hard']]
-    if expensive_flights:
+    if expensive_flights and affordable_flights:
         recommendation += f"""
 ❌ WHY NOT other periods:
 • {len(expensive_flights)} flight options exceed your hard budget limit

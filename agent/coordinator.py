@@ -69,6 +69,71 @@ def get_weather_forecast_tool(destination: str, start_date: Optional[str] = None
     Returns:
         Dictionary with weather forecast summary and periods
     """
+    # Destination-specific weather profiles
+    # Format: {destination: (base_temp_f, temp_variation, storm_week, climate_type)}
+    weather_profiles = {
+        # Hawaii - Tropical, warm year-round, occasional storms
+        "Maui": (82.0, 3.0, 7, "tropical"),
+        
+        # Europe - Temperate, cooler, variable
+        "Paris": (55.0, 8.0, None, "temperate"),
+        "London": (52.0, 7.0, None, "temperate"),
+        "Zurich": (48.0, 10.0, None, "alpine"),
+        "Rome": (60.0, 8.0, None, "mediterranean"),
+        "Barcelona": (62.0, 7.0, None, "mediterranean"),
+        "Amsterdam": (50.0, 8.0, None, "temperate"),
+        "Berlin": (48.0, 9.0, None, "temperate"),
+        "Geneva": (48.0, 10.0, None, "alpine"),
+        "Vienna": (50.0, 9.0, None, "temperate"),
+        "Prague": (48.0, 9.0, None, "temperate"),
+        
+        # Asia - Varied climates
+        "Tokyo": (58.0, 12.0, None, "temperate"),
+        "Bali": (84.0, 2.0, 14, "tropical"),
+        "Dubai": (88.0, 8.0, None, "desert"),
+        "Bangkok": (86.0, 3.0, 7, "tropical"),
+        "Singapore": (86.0, 2.0, 14, "tropical"),
+        "Hong Kong": (70.0, 10.0, 7, "subtropical"),
+        "Shanghai": (58.0, 12.0, None, "subtropical"),
+        "Beijing": (52.0, 15.0, None, "continental"),
+        "Seoul": (52.0, 14.0, None, "continental"),
+        
+        # India - Hot, monsoon season
+        "Bangalore": (78.0, 5.0, 14, "tropical"),
+        "Mumbai": (82.0, 4.0, 7, "tropical"),
+        "Delhi": (75.0, 12.0, None, "subtropical"),
+        "Hyderabad": (80.0, 6.0, 14, "tropical"),
+        "Chennai": (84.0, 3.0, 7, "tropical"),
+        "Kolkata": (82.0, 5.0, 7, "tropical"),
+        "Goa": (84.0, 3.0, 7, "tropical"),
+        "Kochi": (84.0, 2.0, 7, "tropical"),
+        "Trivandrum": (84.0, 2.0, 7, "tropical"),
+        
+        # Americas
+        "New York": (52.0, 15.0, None, "continental"),
+        "Los Angeles": (68.0, 8.0, None, "mediterranean"),
+        "San Francisco": (62.0, 6.0, None, "mediterranean"),
+        "Toronto": (45.0, 18.0, None, "continental"),
+        "Vancouver": (50.0, 10.0, None, "temperate"),
+        "Mexico City": (68.0, 8.0, None, "subtropical"),
+        "Cancun": (82.0, 4.0, 7, "tropical"),
+        "Rio de Janeiro": (80.0, 6.0, 14, "tropical"),
+        "Buenos Aires": (72.0, 10.0, None, "subtropical"),
+        
+        # Oceania
+        "Sydney": (72.0, 10.0, None, "temperate"),
+        "Melbourne": (65.0, 12.0, None, "temperate"),
+        
+        # Middle East & Africa
+        "Istanbul": (58.0, 12.0, None, "temperate"),
+        "Cairo": (75.0, 10.0, None, "desert"),
+        "Cape Town": (70.0, 8.0, None, "mediterranean"),
+    }
+    
+    # Get weather profile for destination, default to moderate climate
+    profile = weather_profiles.get(destination, (70.0, 8.0, None, "temperate"))
+    base_temp, temp_variation, storm_week, climate_type = profile
+    
     if start_date is None:
         start_date = date.today().isoformat()
     
@@ -79,17 +144,44 @@ def get_weather_forecast_tool(destination: str, start_date: Optional[str] = None
         period_start = start + timedelta(days=week)
         period_end = min(period_start + timedelta(days=6), start + timedelta(days=days_ahead - 1))
         
-        base_temp = 82.0
-        temp_variation = (week % 3) * 3.0
-        has_storm = week == 7
-        storm_severity = "moderate" if has_storm else None
-        avg_temp = base_temp + temp_variation
+        # Calculate temperature with variation
+        temp_offset = (week % 3) * (temp_variation / 3.0)
+        avg_temp = base_temp + temp_offset
         
-        conditions = "Warm and mostly sunny"
+        # Determine if this week has storm risk
+        has_storm = (storm_week is not None and week == storm_week)
+        storm_severity = "moderate" if has_storm else None
+        
+        # Generate conditions based on climate type and temperature
         if has_storm:
-            conditions = "Moderate storm expected with increased precipitation"
-        elif avg_temp > 85:
-            conditions = "Hot and sunny"
+            if climate_type == "tropical":
+                conditions = "Tropical storm expected with heavy rainfall"
+            elif climate_type == "temperate":
+                conditions = "Rainy period with possible thunderstorms"
+            else:
+                conditions = "Moderate storm expected with increased precipitation"
+        elif climate_type == "tropical":
+            conditions = "Warm and humid with occasional showers"
+        elif climate_type == "desert":
+            conditions = "Hot and dry with clear skies"
+        elif climate_type == "alpine":
+            conditions = "Cool mountain weather, possible snow at higher elevations"
+        elif climate_type == "mediterranean":
+            conditions = "Mild and pleasant with sunny skies"
+        elif climate_type == "continental":
+            if avg_temp < 40:
+                conditions = "Cold with possible snow"
+            elif avg_temp < 55:
+                conditions = "Cool and crisp"
+            else:
+                conditions = "Mild and comfortable"
+        else:  # temperate
+            if avg_temp > 75:
+                conditions = "Warm and pleasant"
+            elif avg_temp > 60:
+                conditions = "Mild and comfortable"
+            else:
+                conditions = "Cool with variable conditions"
         
         periods.append({
             "start_date": period_start.isoformat(),
@@ -103,13 +195,13 @@ def get_weather_forecast_tool(destination: str, start_date: Optional[str] = None
     storm_periods = [p for p in periods if p["storm_risk"]]
     if storm_periods:
         overall_summary = (
-            f"Forecast for {destination}: Generally warm weather ({periods[0]['avg_temp_f']:.0f}-{periods[-1]['avg_temp_f']:.0f}°F). "
+            f"Forecast for {destination}: Generally {climate_type} weather ({periods[0]['avg_temp_f']:.0f}-{periods[-1]['avg_temp_f']:.0f}°F). "
             f"Storm risk identified: {storm_periods[0]['start_date']} to {storm_periods[0]['end_date']} ({storm_periods[0]['storm_severity']} severity). "
             f"Other periods are clear."
         )
     else:
         overall_summary = (
-            f"Forecast for {destination}: Stable warm weather expected "
+            f"Forecast for {destination}: Stable {climate_type} weather expected "
             f"({periods[0]['avg_temp_f']:.0f}-{periods[-1]['avg_temp_f']:.0f}°F) with minimal precipitation."
         )
     
@@ -144,10 +236,70 @@ def search_flights_tool(
     Returns:
         Dictionary with flight options and summary
     """
+    # Flight duration and airline mapping based on destination
+    flight_profiles = {
+        # Hawaii
+        "OGG": {"duration": 6.0, "duration_with_layover": 8.5, "airlines": ["Hawaiian", "United"], "base_price": 550},
+        # Europe
+        "CDG": {"duration": 11.0, "duration_with_layover": 13.5, "airlines": ["Air France", "United"], "base_price": 850},
+        "LHR": {"duration": 10.5, "duration_with_layover": 13.0, "airlines": ["British Airways", "United"], "base_price": 800},
+        "ZRH": {"duration": 11.5, "duration_with_layover": 14.0, "airlines": ["Swiss", "United"], "base_price": 900},
+        "FCO": {"duration": 12.0, "duration_with_layover": 14.5, "airlines": ["ITA Airways", "United"], "base_price": 850},
+        "BCN": {"duration": 11.5, "duration_with_layover": 14.0, "airlines": ["Iberia", "United"], "base_price": 800},
+        "AMS": {"duration": 10.5, "duration_with_layover": 13.0, "airlines": ["KLM", "United"], "base_price": 850},
+        "BER": {"duration": 11.0, "duration_with_layover": 13.5, "airlines": ["Lufthansa", "United"], "base_price": 850},
+        "GVA": {"duration": 11.5, "duration_with_layover": 14.0, "airlines": ["Swiss", "United"], "base_price": 900},
+        "VIE": {"duration": 11.5, "duration_with_layover": 14.0, "airlines": ["Austrian", "United"], "base_price": 850},
+        "PRG": {"duration": 11.0, "duration_with_layover": 13.5, "airlines": ["Czech Airlines", "United"], "base_price": 800},
+        # Asia
+        "NRT": {"duration": 11.0, "duration_with_layover": 13.5, "airlines": ["ANA", "United"], "base_price": 900},
+        "DPS": {"duration": 17.0, "duration_with_layover": 20.0, "airlines": ["Singapore Airlines", "United"], "base_price": 1100},
+        "DXB": {"duration": 15.5, "duration_with_layover": 18.0, "airlines": ["Emirates", "United"], "base_price": 1000},
+        "BKK": {"duration": 16.0, "duration_with_layover": 19.0, "airlines": ["Thai Airways", "United"], "base_price": 950},
+        "SIN": {"duration": 16.5, "duration_with_layover": 19.5, "airlines": ["Singapore Airlines", "United"], "base_price": 1000},
+        "HKG": {"duration": 13.0, "duration_with_layover": 16.0, "airlines": ["Cathay Pacific", "United"], "base_price": 950},
+        "PVG": {"duration": 12.5, "duration_with_layover": 15.5, "airlines": ["China Eastern", "United"], "base_price": 900},
+        "PEK": {"duration": 12.0, "duration_with_layover": 15.0, "airlines": ["Air China", "United"], "base_price": 900},
+        "ICN": {"duration": 11.5, "duration_with_layover": 14.5, "airlines": ["Korean Air", "United"], "base_price": 850},
+        # India
+        "BLR": {"duration": 17.0, "duration_with_layover": 20.0, "airlines": ["Air India", "United"], "base_price": 1000},
+        "BOM": {"duration": 16.5, "duration_with_layover": 19.5, "airlines": ["Air India", "United"], "base_price": 1000},
+        "DEL": {"duration": 15.5, "duration_with_layover": 18.5, "airlines": ["Air India", "United"], "base_price": 950},
+        "HYD": {"duration": 17.5, "duration_with_layover": 20.5, "airlines": ["Air India", "United"], "base_price": 1000},
+        "MAA": {"duration": 18.0, "duration_with_layover": 21.0, "airlines": ["Air India", "United"], "base_price": 1050},
+        "CCU": {"duration": 17.5, "duration_with_layover": 20.5, "airlines": ["Air India", "United"], "base_price": 1000},
+        "GOI": {"duration": 17.0, "duration_with_layover": 20.0, "airlines": ["Air India", "United"], "base_price": 1000},
+        "COK": {"duration": 18.5, "duration_with_layover": 21.5, "airlines": ["Air India", "United"], "base_price": 1050},
+        # Americas
+        "JFK": {"duration": 5.5, "duration_with_layover": 7.0, "airlines": ["JetBlue", "United"], "base_price": 400},
+        "LAX": {"duration": 1.5, "duration_with_layover": 3.0, "airlines": ["Alaska", "United"], "base_price": 200},
+        "YYZ": {"duration": 5.0, "duration_with_layover": 6.5, "airlines": ["Air Canada", "United"], "base_price": 450},
+        "YVR": {"duration": 2.5, "duration_with_layover": 4.0, "airlines": ["Air Canada", "United"], "base_price": 250},
+        "MEX": {"duration": 4.5, "duration_with_layover": 6.5, "airlines": ["Aeromexico", "United"], "base_price": 400},
+        "CUN": {"duration": 5.5, "duration_with_layover": 7.5, "airlines": ["Aeromexico", "United"], "base_price": 450},
+        "GIG": {"duration": 11.5, "duration_with_layover": 14.5, "airlines": ["LATAM", "United"], "base_price": 900},
+        "EZE": {"duration": 12.0, "duration_with_layover": 15.0, "airlines": ["Aerolineas Argentinas", "United"], "base_price": 950},
+        # Oceania
+        "SYD": {"duration": 14.5, "duration_with_layover": 17.5, "airlines": ["Qantas", "United"], "base_price": 1100},
+        "MEL": {"duration": 15.0, "duration_with_layover": 18.0, "airlines": ["Qantas", "United"], "base_price": 1100},
+        # Middle East & Africa
+        "IST": {"duration": 13.0, "duration_with_layover": 16.0, "airlines": ["Turkish Airlines", "United"], "base_price": 900},
+        "CAI": {"duration": 14.0, "duration_with_layover": 17.0, "airlines": ["EgyptAir", "United"], "base_price": 950},
+        "CPT": {"duration": 18.0, "duration_with_layover": 21.0, "airlines": ["South African Airways", "United"], "base_price": 1200},
+    }
+    
+    # Get flight profile for destination, default to medium-haul if not found
+    profile = flight_profiles.get(destination, {
+        "duration": 8.0,
+        "duration_with_layover": 10.5,
+        "airlines": ["United", "Delta"],
+        "base_price": 700
+    })
+    
     dep_date = date.fromisoformat(departure_date)
     ret_date = date.fromisoformat(return_date)
     options = []
-    base_prices = [550, 620, 680, 720, 750, 800, 850]
+    base_prices = [profile["base_price"] + i * 30 for i in range(7)]  # Vary by day of week
     
     for day_offset in range(-flexibility_days, flexibility_days + 1):
         candidate_dep = dep_date + timedelta(days=day_offset)
@@ -164,17 +316,22 @@ def search_flights_tool(
                 if is_red_eye:
                     price *= 0.85
                 
+                # Use destination-specific airlines and durations
+                airline = profile["airlines"][variant % len(profile["airlines"])]
+                duration = profile["duration"] if variant == 1 else profile["duration_with_layover"]
+                layovers = 0 if variant == 1 else 1
+                
                 options.append({
                     "departure_date": candidate_dep.isoformat(),
                     "return_date": candidate_ret.isoformat(),
                     "price_usd": price,
-                    "airline": "United" if variant == 0 else "Hawaiian",
+                    "airline": airline,
                     "departure_time": "08:30" if not is_red_eye else "23:45",
                     "return_time": "14:20",
                     "is_red_eye": is_red_eye,
                     "is_weekday": is_weekday,
-                    "layovers": 1 if variant == 0 else 0,
-                    "total_duration_hours": 8.5 if variant == 0 else 6.0,
+                    "layovers": layovers,
+                    "total_duration_hours": duration,
                     "booking_code": f"FLT-{candidate_dep.isoformat()}-{variant}",
                 })
     
