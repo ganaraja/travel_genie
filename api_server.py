@@ -102,6 +102,8 @@ def get_travel_recommendation(query, user_id):
         "amsterdam": ("Amsterdam", "Netherlands", "AMS"),
         "berlin": ("Berlin", "Germany", "BER"),
         "zurich": ("Zurich", "Switzerland", "ZRH"),
+        "switzerland": ("Zurich", "Switzerland", "ZRH"),
+        "geneva": ("Geneva", "Switzerland", "GVA"),
         "vienna": ("Vienna", "Austria", "VIE"),
         "prague": ("Prague", "Czech Republic", "PRG"),
         "istanbul": ("Istanbul", "Turkey", "IST"),
@@ -118,9 +120,11 @@ def get_travel_recommendation(query, user_id):
     }
     
     # Search for destination in query
+    # Sort by key length (longest first) to match more specific terms before shorter ones
     query_lower = query.lower()
-    for key, (city, country, airport) in destinations.items():
+    for key in sorted(destinations.keys(), key=len, reverse=True):
         if key in query_lower:
+            city, country, airport = destinations[key]
             destination = city
             destination_country = country
             airport_code = airport

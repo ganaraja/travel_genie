@@ -179,6 +179,30 @@ class TestRecommendEndpoint:
         
         assert "bali" in recommendation.lower()
 
+    def test_recommend_zurich_destination(self, client):
+        """Test recommendation for Zurich destination."""
+        payload = {
+            "query": "best time to visit zurich",
+            "userId": "default"
+        }
+        
+        response = client.post(
+            '/api/recommend',
+            data=json.dumps(payload),
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        recommendation = data["recommendation"]
+        
+        # Should mention Zurich or Switzerland
+        assert "zurich" in recommendation.lower() or "switzerland" in recommendation.lower()
+        # Should NOT mention Maui (common bug)
+        assert "maui" not in recommendation.lower()
+        # Should mention ZRH airport code
+        assert "zrh" in recommendation.lower() or "zurich" in recommendation.lower()
+
 
 class TestUserProfileEndpoint:
     """Tests for /api/user-profile/<user_id> endpoint."""

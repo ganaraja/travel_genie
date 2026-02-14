@@ -170,7 +170,9 @@ function ChatMessage({ message }) {
   // Assistant message with potential structured data
   return (
     <div className="message assistant-message">
-      <div className="message-avatar assistant-avatar">✈️🌴🏖️</div>
+      <div className="message-avatar assistant-avatar">
+        <img src="/travel-icon.svg" alt="Travel" />
+      </div>
       <div className="message-content">
         <div className="message-bubble">
           {/* Main recommendation text */}

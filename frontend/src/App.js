@@ -84,7 +84,9 @@ function App() {
         <div className="header-content">
           <div className="header-left">
             <div className="logo-container">
-              <div className="logo-icon">✈️🌴🏖️</div>
+              <div className="logo-icon">
+                <img src="/travel-icon.svg" alt="Travel Genie" />
+              </div>
               <div className="logo-text">
                 <h1>Travel Genie</h1>
                 <p>AI-Powered Travel Planning</p>
