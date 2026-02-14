@@ -13,341 +13,353 @@ This implementation plan breaks down the Travel Genie improvements into discrete
 
 Each task builds incrementally, ensuring the system remains functional throughout development.
 
-## Tasks
+# Implementation Plan: Travel Genie Improvements
 
-- [ ] 1. Set up MCP client infrastructure
-  - [ ] 1.1 Create MCP client module with connection handling
-    - Implement `MCPClient` class in `agent/mcp_client.py`
-    - Add async methods for `call_tool()`, `list_tools()`, and `close()`
-    - Implement connection pooling and retry logic with exponential backoff
-    - Add custom exception types: `MCPConnectionError` and `MCPToolError`
-    - _Requirements: 2.1, 2.4_
+## Overview
 
-  - [ ]\* 1.2 Write property test for MCP serialization round-trip
-    - **Property 1: MCP Protocol Round-Trip**
-    - **Validates: Requirements 2.4**
-    - Generate random tool requests, serialize to MCP format, deserialize, verify equivalence
-    - Test with edge cases (empty arguments, null values, nested objects)
+This implementation plan tracks the Travel Genie improvements. The plan has been updated to reflect completed work and remaining tasks.
 
-  - [ ]\* 1.3 Write unit tests for MCP client error handling
-    - Test connection failures and retry logic
-    - Test timeout handling
-    - Test malformed response handling
-    - _Requirements: 2.1_
+**Completed Work** (from context transfer):
 
-- [ ] 2. Enhance MCP server with tool registration
-  - [ ] 2.1 Update MCP server to register all tools on startup
-    - Modify `tools/server.py` to auto-discover and register all tool functions
-    - Add tool metadata (name, description, parameters) to registration
-    - Implement `/tools` endpoint to list available tools
-    - _Requirements: 2.3_
+- ✅ Task C1: Fixed citizenship field error in coordinator
+- ✅ Task C2: Created comprehensive test suite (backend and frontend)
+- ✅ Task C3: Fixed Bangalore query support and added 40+ destinations
+- ✅ Task C4: Added India cities to frontend and backend (30+ cities)
+- ✅ Task C5: Fixed destination-specific output display
+- ✅ Task C6: Implemented "always show top 3 options" feature
 
-  - [ ]\* 2.2 Write integration test for tool registration
-    - Start MCP server, query `/tools` endpoint
-    - Verify all expected tools are registered
-    - Verify tool metadata is complete
-    - _Requirements: 2.3_
+**Remaining Work**: The original spec tasks for MCP integration, enhanced reasoning, and sophisticated scoring remain to be implemented.
 
-- [ ] 3. Implement unified scoring module
-  - [ ] 3.1 Create holistic scoring functions in core/scoring.py
-    - Implement `ScoringWeights`, `FactorScore`, and `HolisticScore` dataclasses
-    - Implement `score_travel_option()` function that combines all factors
-    - Implement individual scoring functions: `score_weather()`, `score_flight()`, `score_hotel()`, `score_schedule()`
-    - Ensure all scores are normalized to [0.0, 1.0] range
-    - _Requirements: 3.1, 3.2, 3.3_
+## Completed Tasks
 
-  - [ ]\* 3.2 Write property test for factor normalization
-    - **Property 2: Scoring Factor Normalization**
-    - **Validates: Requirements 3.3**
-    - Generate random travel options and profiles
-    - Verify all factor scores are in [0.0, 1.0] range
+- [x] C1. Fix citizenship field error in coordinator
+  - [x] C1.1 Add citizenship and passport_country fields to coordinator's get_user_profile_tool() return dictionary
+  - [x] C1.2 Verify API server receives citizenship fields correctly
+  - _Completed: Fixed KeyError in api_server.py_
 
-  - [ ]\* 3.3 Write property test for scoring monotonicity
-    - **Property 3: Scoring Monotonicity with Preference Satisfaction**
-    - **Validates: Requirements 3.4**
-    - Generate random options, improve one factor, verify score doesn't decrease
+- [x] C2. Create comprehensive test suite
+  - [x] C2.1 Reorganize tests into tests/backend/ and tests/frontend/ folders
+  - [x] C2.2 Create backend tests: test_visa_checking.py, test_coordinator.py, test_api_server.py, test_integration.py, test_user_profile_citizenship.py
+  - [x] C2.3 Create frontend tests: App.test.js, ChatMessage.test.js, ChatInput.test.js, travelAgentService.test.js
+  - [x] C2.4 Create test documentation: TESTING_GUIDE.md, TESTS_SUMMARY.md
+  - [x] C2.5 Verify all tests pass (86+ backend tests, 130+ frontend tests)
+  - _Completed: Comprehensive test coverage with documentation_
 
-  - [ ]\* 3.4 Write property test for weighted trade-offs
-    - **Property 4: Weighted Trade-Off Application**
-    - **Validates: Requirements 3.2**
-    - Generate two options with different strengths, vary weights, verify relative scores change appropriately
+- [x] C3. Fix Bangalore query support
+  - [x] C3.1 Enhance destination mapping in api_server.py to support 40+ destinations
+  - [x] C3.2 Add proper airport codes for all cities
+  - [x] C3.3 Expand visa matrix to include 25+ countries
+  - [x] C3.4 Verify destination-specific weather, flights, hotels display correctly
+  - [x] C3.5 Create test_bangalore_query.py and test_destination_output.py
+  - _Completed: System now supports 40+ destinations with correct output_
 
-- [ ] 4. Checkpoint - Ensure scoring tests pass
-  - Ensure all tests pass, ask the user if questions arise.
+- [x] C4. Add India cities to frontend and backend
+  - [x] C4.1 Add 30+ Indian cities to backend destinations mapping
+  - [x] C4.2 Include major metros: Bangalore, Mumbai, Delhi, Hyderabad, Chennai, Kolkata, Pune, Ahmedabad
+  - [x] C4.3 Include tourist destinations: Goa, Jaipur, Agra, Udaipur, Jodhpur, Varanasi, Amritsar
+  - [x] C4.4 Include South India: Kochi, Trivandrum, Coimbatore, Mangalore
+  - [x] C4.5 Update frontend example queries to include India cities
+  - [x] C4.6 Create INDIA_CITIES_GUIDE.md documentation
+  - [x] C4.7 Update frontend tests to reflect 8 example queries
+  - _Completed: Comprehensive India city support with documentation_
 
-- [ ] 5. Implement enhanced weather analysis
-  - [ ] 5.1 Create weather analysis functions in core/analysis.py
-    - Implement `WeatherMatchResult` dataclass
-    - Implement `analyze_weather_match()` function
-    - Implement `calculate_temperature_score()` with linear decay outside preferred range
-    - Implement `calculate_storm_risk_score()` with severity-weighted penalties
-    - Implement `identify_optimal_windows()` to find best periods
-    - _Requirements: 4.1, 4.2, 4.3, 4.4_
+- [x] C5. Fix destination-specific output display
+  - [x] C5.1 Verify backend correctly reflects destinations in output
+  - [x] C5.2 Create test_destination_output.py to verify all destinations show correctly
+  - [x] C5.3 Create RESTART_SERVERS.md guide for loading new code
+  - [x] C5.4 Verify weather, hotels, flights all show destination-specific names
+  - _Completed: All destinations display correctly, tests verify behavior_
 
-  - [ ]\* 5.2 Write property test for weather scoring monotonicity
-    - **Property 5: Weather Scoring Monotonicity**
-    - **Validates: Requirements 4.2, 4.3**
-    - Generate random forecasts, increase temperature deviation or storm severity, verify score doesn't increase
+- [x] C6. Show top 3 flight and hotel options always
+  - [x] C6.1 Update synthesize_recommendation() to always show top 3 options
+  - [x] C6.2 Add detailed information for each option: price, dates, duration, layovers, rating
+  - [x] C6.3 Add clear budget indicators: ✓ Within budget, ⚠️ Over soft budget, ⚠️ Outside budget
+  - [x] C6.4 Add special markers: ⭐ Preferred brand, 💰 Special pricing
+  - [x] C6.5 Enhance recommendation section with budget considerations
+  - [x] C6.6 Show best available option even if over budget with helpful guidance
+  - [x] C6.7 Create TOP_OPTIONS_FEATURE.md documentation
+  - _Completed: Always shows top 3 options with detailed information and budget guidance_
 
-  - [ ]\* 5.3 Write property test for optimal window identification
-    - **Property 6: Optimal Weather Window Identification**
-    - **Validates: Requirements 4.4**
-    - Generate random forecasts, identify optimal window, verify it has highest score
+## Remaining Tasks (Hybrid Approach)
 
-  - [ ]\* 5.4 Write unit tests for weather analysis edge cases
-    - Test with no storm periods
-    - Test with all storm periods
-    - Test with temperatures far outside preferred range
-    - _Requirements: 4.1, 4.2, 4.3, 4.4_
+### Phase 1: Basic Multi-Factor Scoring
 
-- [ ] 6. Implement advanced flight scoring
-  - [ ] 6.1 Create flight scoring functions in core/scoring.py
-    - Implement `calculate_flight_price_score()` with soft/hard budget handling
-    - Implement `calculate_schedule_flexibility_score()` with weekday/red-eye bonuses
-    - Implement `calculate_flight_duration_score()` considering layovers and total time
-    - Integrate into `score_flight()` function
-    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+- [ ] 1. Implement basic scoring module
+  - [ ] 1.1 Create core/scoring.py with scoring functions
+    - Implement `calculate_weather_score()` - compare temperature against user preferences
+    - Implement `calculate_price_score()` - evaluate flight/hotel prices against budgets
+    - Implement `calculate_schedule_score()` - reward weekday/red-eye for flexible users
+    - Implement `score_travel_option()` - combine all factors with equal weights
+    - Ensure all scores normalized to [0.0, 1.0] range
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-  - [ ]\* 6.2 Write property test for flight flexibility reward
-    - **Property 7: Flight Flexibility Reward**
-    - **Validates: Requirements 5.1**
-    - Generate pairs of identical flights (one weekday/red-eye, one not), verify flexible users score weekday/red-eye higher
+  - [ ] 1.2 Integrate scoring into recommendation synthesis
+    - Update `synthesize_recommendation()` in api_server.py to use scoring
+    - Sort options by combined score instead of just price
+    - Include score explanations in output
+    - _Requirements: 1.1, 1.3, 1.4_
 
-  - [ ]\* 6.3 Write property test for budget constraint enforcement
-    - **Property 8: Flight Budget Constraint Enforcement**
-    - **Validates: Requirements 5.2, 5.3, 5.4**
-    - Generate flights at various price points, verify score ranges match budget constraints
+  - [ ] 1.3 Write unit tests for scoring
+    - Test weather score with various temperature differences
+    - Test price score with soft/hard budget boundaries
+    - Test schedule score with weekday/weekend/red-eye combinations
+    - Test score normalization (all scores in 0.0-1.0 range)
+    - _Requirements: 1.2, 1.4_
 
-  - [ ]\* 6.4 Write unit tests for flight scoring edge cases
-    - Test with price exactly at soft budget
-    - Test with price exactly at hard budget
-    - Test with zero flexibility
-    - Test with maximum layovers
-    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+### Phase 2: Real API Integrations
 
-- [ ] 7. Implement nuanced hotel scoring
-  - [ ] 7.1 Create hotel scoring functions in core/scoring.py
-    - Implement `calculate_hotel_price_score()` with budget range handling
-    - Implement `calculate_brand_preference_score()` with preferred brand bonuses
-    - Implement `calculate_anomaly_impact()` with safety-conscious weighting
-    - Implement `calculate_hotel_rating_score()` for comfort factor
-    - Integrate into `score_hotel()` function
-    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+- [ ] 2. Integrate real weather API
+  - [ ] 2.1 Set up OpenWeatherMap API integration
+    - Create `tools/weather_api.py` with API client
+    - Add API key configuration via environment variable
+    - Implement caching (1 hour TTL) using simple dict or Redis
+    - Add fallback to mock data when API fails
+    - _Requirements: 2.1, 2.2, 2.4, 2.5, 9.1, 9.2, 9.3_
 
-  - [ ]\* 7.2 Write property test for brand preference reward
-    - **Property 9: Hotel Brand Preference Reward**
-    - **Validates: Requirements 6.1**
-    - Generate pairs of identical hotels (one with preferred brand, one without), verify preferred brand scores higher
+  - [ ] 2.2 Update weather tool to use real API
+    - Modify `get_weather_forecast_tool()` to call weather API
+    - Handle API errors gracefully with user-friendly messages
+    - Log API calls for debugging
+    - _Requirements: 2.1, 2.2, 2.3, 2.5, 6.1, 6.4_
 
-  - [ ]\* 7.3 Write property test for anomalous pricing detection
-    - **Property 10: Anomalous Pricing Detection and Flagging**
-    - **Validates: Requirements 6.2**
-    - Generate hotels with anomalous pricing, verify flag and reason are present
+  - [ ] 2.3 Write tests for weather API integration
+    - Test successful API calls
+    - Test fallback to mock data on failure
+    - Test caching behavior
+    - Test error handling
+    - _Requirements: 2.2, 2.5, 6.1_
 
-  - [ ]\* 7.4 Write property test for safety-conscious anomaly penalty
-    - **Property 11: Safety-Conscious Anomaly Penalty**
-    - **Validates: Requirements 6.3**
-    - Generate hotels with storm-related anomalous pricing, verify safety-conscious users get lower scores
+- [ ] 3. Integrate real flight API
+  - [ ] 3.1 Set up Amadeus or Skyscanner API integration
+    - Create `tools/flight_api.py` with API client
+    - Add API key configuration via environment variable
+    - Implement caching (15 minutes TTL)
+    - Add fallback to mock data when API fails
+    - _Requirements: 3.1, 3.2, 3.4, 3.5, 9.1, 9.2, 9.3_
 
-  - [ ]\* 7.5 Write unit tests for hotel scoring edge cases
-    - Test with rate below budget minimum
-    - Test with rate above budget maximum
-    - Test with multiple preferred brands
-    - Test with anomalous pricing and non-safety-conscious user
-    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+  - [ ] 3.2 Update flight tool to use real API
+    - Modify `search_flights_tool()` to call flight API
+    - Handle API errors and rate limits gracefully
+    - Log API calls for debugging
+    - _Requirements: 3.1, 3.2, 3.3, 3.5, 6.1, 6.4_
 
-- [ ] 8. Checkpoint - Ensure core logic tests pass
-  - Ensure all tests pass, ask the user if questions arise.
+  - [ ] 3.3 Write tests for flight API integration
+    - Test successful API calls
+    - Test fallback to mock data on failure
+    - Test caching behavior
+    - Test rate limit handling
+    - _Requirements: 3.2, 3.5, 6.1_
 
-- [ ] 9. Update agent coordinator with MCP integration
-  - [ ] 9.1 Refactor coordinator to use MCP client
-    - Modify `agent/coordinator.py` to inject `MCPClient` dependency
-    - Replace direct tool imports with `mcp_client.call_tool()` calls
-    - Implement `call_tool_with_trace()` to record reasoning steps
-    - Add `reasoning_trace` list to capture all agent actions
-    - _Requirements: 2.1, 2.5_
+- [ ] 4. Integrate real hotel API
+  - [ ] 4.1 Set up Booking.com or Hotels.com API integration
+    - Create `tools/hotel_api.py` with API client
+    - Add API key configuration via environment variable
+    - Implement caching (1 hour TTL)
+    - Add fallback to mock data when API fails
+    - _Requirements: 4.1, 4.2, 4.4, 4.5, 9.1, 9.2, 9.3_
 
-  - [ ] 9.2 Add epistemic reflection prompts to agent instructions
-    - Add `EPISTEMIC_REFLECTION_PROMPT` to agent instructions
-    - Update agent instruction to explicitly require reflection before tool calls
-    - Add prompts to identify missing information and explain why it's needed
-    - _Requirements: 1.1, 1.2, 1.3, 1.4_
+  - [ ] 4.2 Update hotel tool to use real API
+    - Modify `search_hotels_tool()` to call hotel API
+    - Handle API errors and rate limits gracefully
+    - Log API calls for debugging
+    - _Requirements: 4.1, 4.2, 4.3, 4.5, 6.1, 6.4_
 
-  - [ ] 9.3 Enhance synthesis prompts for nuanced explanations
-    - Add `SYNTHESIS_PROMPT` with requirements for factor-by-factor reasoning
-    - Update prompts to require alternative options with explanations
-    - Update prompts to require rejected periods with reasons
-    - Update prompts to require trade-off acknowledgment
+  - [ ] 4.3 Write tests for hotel API integration
+    - Test successful API calls
+    - Test fallback to mock data on failure
+    - Test caching behavior
+    - Test rate limit handling
+    - _Requirements: 4.2, 4.5, 6.1_
+
+### Phase 3: Frontend Profile Editing
+
+- [ ] 5. Implement profile editing UI
+  - [ ] 5.1 Create ProfileEditor component
+    - Create `frontend/src/components/ProfileEditor.js`
+    - Add form fields for all profile attributes
+    - Implement real-time validation
+    - Add helpful descriptions for each field
+    - Style with CSS for good UX
+    - _Requirements: 5.1, 5.2, 5.5_
+
+  - [ ] 5.2 Add profile update API endpoint
+    - Add POST `/api/user-profile/<user_id>` endpoint in api_server.py
+    - Validate profile data server-side
+    - Persist changes to user profile
+    - Return success/error response
+    - _Requirements: 5.3, 5.4, 6.2_
+
+  - [ ] 5.3 Integrate ProfileEditor into frontend
+    - Add profile editing route/page
+    - Connect form to API endpoint
+    - Show loading states during save
+    - Display success/error messages
+    - _Requirements: 5.3, 5.4, 6.1, 6.3_
+
+  - [ ] 5.4 Write tests for profile editing
+    - Test form validation (client-side)
+    - Test API endpoint (server-side validation)
+    - Test successful profile update flow
+    - Test error handling
+    - _Requirements: 5.2, 5.3, 5.4, 6.2_
+
+### Phase 4: Enhanced Error Handling & UX
+
+- [ ] 6. Improve error handling and loading states
+  - [ ] 6.1 Add loading indicators to frontend
+    - Show spinner during API calls
+    - Show progress for multi-step operations
+    - Disable submit buttons during loading
+    - _Requirements: 6.3, 10.3, 10.5_
+
+  - [ ] 6.2 Implement comprehensive error handling
+    - Add try-catch blocks around all API calls
+    - Display user-friendly error messages
+    - Log detailed errors for debugging
+    - Add retry buttons for transient failures
+    - _Requirements: 6.1, 6.2, 6.4, 6.5_
+
+  - [ ] 6.3 Add field-level validation errors
+    - Show validation errors next to form fields
+    - Prevent submission until errors are fixed
+    - Provide helpful error messages
+    - _Requirements: 5.2, 6.2_
+
+  - [ ] 6.4 Write tests for error handling
+    - Test API failure scenarios
+    - Test validation error display
+    - Test retry functionality
+    - Test loading state display
+    - _Requirements: 6.1, 6.2, 6.3, 6.5_
+
+### Phase 5: Property-Based Testing
+
+- [ ] 7. Add property-based tests for critical paths
+  - [ ] 7.1 Install hypothesis library
+    - Add hypothesis to requirements.txt
+    - Configure hypothesis settings
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-  - [ ]\* 9.4 Write integration test for agent-MCP workflow
-    - Start MCP server and agent with MCP client
-    - Send test query, verify agent calls tools via MCP
-    - Verify reasoning trace captures all steps
-    - Verify epistemic reflection appears in output
-    - _Requirements: 2.1, 1.1_
+  - [ ] 7.2 Write property test for visa checking
+    - Test all citizenship/destination combinations
+    - Verify visa requirements are consistent
+    - Run 100+ iterations
+    - _Requirements: 7.1_
 
-- [ ] 10. Create enhanced data models
-  - [ ] 10.1 Add new dataclasses to core/models.py
-    - Implement `MCPToolRequest` and `MCPToolResponse` dataclasses
-    - Implement `ReasoningStep` dataclass for reasoning trace
-    - Implement `ScoringWeights`, `FactorScore`, `HolisticScore` dataclasses
-    - Implement `EnhancedRecommendation`, `RecommendationOption`, `RejectedOption`, `TradeOffExplanation` dataclasses
-    - _Requirements: 3.1, 7.1_
+  - [ ] 7.3 Write property test for scoring normalization
+    - Generate random travel options
+    - Verify all scores in [0.0, 1.0] range
+    - Run 100+ iterations
+    - _Requirements: 7.2_
 
-  - [ ]\* 10.2 Write property test for data serialization round-trip
-    - **Property 14: Data Serialization Round-Trip**
-    - **Validates: Requirements 15.1, 15.2, 15.3, 15.4**
-    - Generate random instances of all data models
-    - Serialize to JSON, deserialize, verify equivalence
-    - Test with edge cases (empty lists, None values, boundary values)
+  - [ ] 7.4 Write property test for data serialization
+    - Test UserProfile round-trip (dict → object → dict)
+    - Test with edge cases (empty lists, None values)
+    - Run 100+ iterations
+    - _Requirements: 7.3_
 
-- [ ] 11. Implement frontend reasoning display component
-  - [ ] 11.1 Create ReasoningDisplay component
-    - Create `frontend/src/components/ReasoningDisplay.tsx`
-    - Implement timeline view with stages connected by lines
-    - Add `ReasoningStepCard` sub-component for each step
-    - Implement expandable details for tool calls and responses
-    - Add color coding (blue for in-progress, green for complete, gray for pending)
-    - Add smooth animations between stages
+  - [ ] 7.5 Write property test for budget constraints
+    - Test soft/hard budget enforcement
+    - Verify flights over hard budget are excluded
+    - Run 100+ iterations
+    - _Requirements: 7.4_
+
+### Phase 6: Improved Recommendation Quality
+
+- [ ] 8. Enhance recommendation synthesis
+  - [ ] 8.1 Improve weather analysis
+    - Compare temperatures against user preferences
+    - Highlight periods matching preferred temperature range
+    - Warn about extreme temperatures
+    - _Requirements: 8.1_
+
+  - [ ] 8.2 Improve flight recommendations
+    - Reward weekday flights for flexible users
+    - Reward red-eye flights for flexible users
+    - Explain why certain flights are better
+    - _Requirements: 8.2_
+
+  - [ ] 8.3 Improve hotel recommendations
+    - Reward preferred brands
+    - Explain anomalous pricing clearly
+    - Highlight best value options
+    - _Requirements: 8.3_
+
+  - [ ] 8.4 Add alternative options
+    - Show 2-3 alternative travel periods
+    - Explain what makes each alternative different
+    - Explain trade-offs clearly
+    - _Requirements: 8.4, 8.5_
+
+  - [ ] 8.5 Write tests for improved recommendations
+    - Test weather preference matching
+    - Test flight flexibility rewards
+    - Test hotel brand preferences
+    - Test alternative options generation
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
 
-  - [ ]\* 11.2 Write property test for chronological ordering
-    - **Property 12: Reasoning Steps Chronological Ordering**
-    - **Validates: Requirements 8.3**
-    - Generate random reasoning steps with timestamps
-    - Render component, verify steps appear in chronological order
+### Phase 7: Performance Optimization
 
-  - [ ]\* 11.3 Write unit tests for ReasoningDisplay component
-    - Test rendering with empty steps
-    - Test rendering with all stage types
-    - Test expand/collapse functionality
-    - Test active step highlighting
-    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+- [ ] 9. Optimize API calls and caching
+  - [ ] 9.1 Implement parallel API calls
+    - Call weather, flights, hotels APIs in parallel
+    - Use asyncio or threading
+    - Reduce total query time
+    - _Requirements: 10.2, 10.4_
 
-- [ ] 12. Implement frontend options display component
-  - [ ] 12.1 Create OptionsDisplay component
-    - Create `frontend/src/components/OptionsDisplay.tsx`
-    - Implement `PrimaryRecommendation` sub-component with prominent styling
-    - Implement `AlternativesSection` sub-component for alternatives
-    - Implement `RejectedPeriodsSection` sub-component with collapsible list
-    - Implement `ComparisonView` modal for side-by-side comparison
-    - Add factor-by-factor breakdown for each option
-    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
+  - [ ] 9.2 Implement response streaming
+    - Show partial results as they arrive
+    - Update UI progressively
+    - Improve perceived performance
+    - _Requirements: 10.3, 10.5_
 
-  - [ ]\* 12.2 Write unit tests for OptionsDisplay component
-    - Test primary recommendation rendering
-    - Test alternatives rendering with explanations
-    - Test rejected periods rendering with reasons
-    - Test comparison view modal
-    - Test expand/collapse for option details
-    - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
+  - [ ] 9.3 Add performance monitoring
+    - Log API call durations
+    - Track query completion times
+    - Identify slow operations
+    - _Requirements: 10.4_
 
-- [ ] 13. Implement frontend profile management component
-  - [ ] 13.1 Create ProfileManager component
-    - Create `frontend/src/components/ProfileManager.tsx`
-    - Implement `ProfileDisplay` sub-component for read-only view
-    - Implement `ProfileEditForm` sub-component with all profile fields
-    - Add form fields: temperature range slider, budget sliders, brand multi-select, trip length input, comfort radio buttons, flexibility slider, safety toggle
-    - Implement real-time validation for all fields
-    - Add helpful descriptions for each field
-    - _Requirements: 10.1, 10.2, 10.5_
+  - [ ] 9.4 Write performance tests
+    - Test parallel API calls work correctly
+    - Verify caching reduces API calls
+    - Measure query completion times
+    - _Requirements: 10.1, 10.2, 10.4_
 
-  - [ ] 13.2 Implement profile update API integration
-    - Add API call to persist profile changes
-    - Handle success and error responses
-    - Display confirmation message on success
-    - Display error messages on failure
-    - _Requirements: 10.3, 10.4_
+### Phase 8: Documentation & Deployment
 
-  - [ ]\* 13.3 Write property test for profile form validation
-    - **Property 13: Profile Form Validation**
-    - **Validates: Requirements 10.2**
-    - Generate invalid profile inputs (soft > hard budget, min > max temp, negative values)
-    - Verify validation prevents submission and shows errors
+- [ ] 10. Update documentation
+  - [ ] 10.1 Create API integration guide
+    - Document how to get API keys
+    - Provide setup instructions for each API
+    - Include code examples
+    - Add troubleshooting section
+    - _Requirements: 9.4, 9.5_
 
-  - [ ]\* 13.4 Write unit tests for ProfileManager component
-    - Test profile display rendering
-    - Test edit mode toggle
-    - Test form field rendering
-    - Test validation error display
-    - Test successful submission flow
-    - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
+  - [ ] 10.2 Update README with new features
+    - Document profile editing feature
+    - Document scoring improvements
+    - Update architecture diagram
+    - Add performance notes
+    - _Requirements: 9.4_
 
-- [ ] 14. Checkpoint - Ensure frontend tests pass
-  - Ensure all tests pass, ask the user if questions arise.
+  - [ ] 10.3 Create deployment guide
+    - Document environment variables
+    - Provide Docker deployment instructions
+    - Add production configuration tips
+    - Include monitoring recommendations
+    - _Requirements: 9.4, 9.5_
 
-- [ ] 15. Add comprehensive integration tests
-  - [ ]\* 15.1 Write integration test for MCP client-server communication
-    - Start MCP server in test mode
-    - Create MCP client, call each tool
-    - Verify requests are properly serialized
-    - Verify responses are properly deserialized
-    - Test error handling for connection failures and tool errors
-    - _Requirements: 2.1, 2.4_
-
-  - [ ]\* 15.2 Write integration test for agent workflow with MCP
-    - Start MCP server and create agent with MCP client
-    - Send test query: "Is it a good time to go to Maui?"
-    - Verify agent performs epistemic reflection
-    - Verify agent calls tools in correct order (profile → weather → flights → hotels)
-    - Verify reasoning trace captures all steps
-    - Verify final recommendation includes all required elements
-    - _Requirements: 1.1, 2.1, 7.1_
-
-  - [ ]\* 15.3 Write end-to-end test for complete recommendation flow
-    - Start full system (MCP server, agent, frontend)
-    - Submit query through frontend
-    - Verify reasoning display shows all stages
-    - Verify recommendation includes primary, alternatives, and rejected periods
-    - Verify all factor explanations are present
-    - _Requirements: 1.1, 7.1, 8.1, 9.1_
-
-- [ ] 16. Update documentation
-  - [ ] 16.1 Update README with MCP server setup instructions
-    - Add section on starting MCP server separately
-    - Add section on configuring MCP client connection
-    - Add troubleshooting for common MCP connection issues
-    - Update architecture diagram to show MCP integration
-    - _Requirements: 14.1, 14.5_
-
-  - [ ] 16.2 Create API integration guide
-    - Create `docs/API_INTEGRATION.md` file
-    - Add sections for each external API (weather, flights, hotels)
-    - Include code examples for replacing mock implementations
-    - Add authentication and rate limiting guidance
-    - _Requirements: 14.2_
-
-  - [ ] 16.3 Create deployment guide
-    - Create `docs/DEPLOYMENT.md` file
-    - Add instructions for Docker deployment
-    - Add instructions for AWS deployment (Lambda + API Gateway)
-    - Add instructions for GCP deployment (Cloud Run)
-    - Add instructions for Heroku deployment
-    - Include environment variable configuration
-    - _Requirements: 14.3_
-
-  - [ ] 16.4 Create troubleshooting guide
-    - Create `docs/TROUBLESHOOTING.md` file
-    - Add common issues and solutions for MCP connection problems
-    - Add debugging tips for agent reasoning issues
-    - Add performance optimization tips
-    - Add FAQ section
-    - _Requirements: 14.4_
-
-- [ ] 17. Final checkpoint - Ensure all tests pass
-  - Run full test suite (unit, property, integration, frontend)
-  - Verify all property tests run at least 100 iterations
-  - Verify test coverage meets goals (core: 90%, tools: 85%, frontend: 80%)
-  - Ensure all tests pass, ask the user if questions arise.
+  - [ ] 10.4 Update testing documentation
+    - Document property-based tests
+    - Explain how to run all tests
+    - Add coverage requirements
+    - _Requirements: 7.5_
 
 ## Notes
 
-- Tasks marked with `*` are optional and can be skipped for faster MVP
+- All tasks focus on practical improvements without MCP infrastructure
+- Keep current architecture (direct function calls)
 - Each task references specific requirements for traceability
-- Checkpoints ensure incremental validation
-- Property tests validate universal correctness properties with 100+ iterations
-- Unit tests validate specific examples and edge cases
-- Integration tests validate component interactions
-- Frontend tests validate UI components and user interactions
-- All property tests must include comment tags referencing design properties
+- Tests should be written for all new functionality
+- API integrations should have fallback to mock data
+- Focus on delivering value incrementally

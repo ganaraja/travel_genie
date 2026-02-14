@@ -108,7 +108,15 @@ def synthesize_recommendation(
     best_options.sort(key=lambda x: x["score"], reverse=True)
     
     if not best_options:
-        # No good options found
+        # No good options found - provide personalized fallback
+        temp_min, temp_max = profile.preferred_temp_range
+        fallback_summary = (
+            f"Unable to find a suitable travel window that meets all your preferences "
+            f"(temperature {temp_min:.0f}-{temp_max:.0f}°F, "
+            f"budget ${profile.airfare_budget_soft:.0f}-${profile.airfare_budget_hard:.0f} for flights). "
+            f"Consider adjusting dates or budget constraints."
+        )
+        
         return Recommendation(
             recommended_start=date.today() + timedelta(days=30),
             recommended_end=date.today() + timedelta(days=37),
@@ -124,7 +132,7 @@ def synthesize_recommendation(
                 (r["start"], r["end"], r["reason"])
                 for r in rejected_periods[:3]
             ],
-            personalized_summary="Unable to find a suitable travel window that meets all your preferences. Consider adjusting dates or budget constraints.",
+            personalized_summary=fallback_summary,
         )
     
     # Best option

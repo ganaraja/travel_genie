@@ -35,6 +35,8 @@ def get_user_profile_tool(user_id: str) -> dict:
     
     return {
         "user_id": profile.user_id,
+        "citizenship": profile.citizenship,
+        "passport_country": profile.passport_country,
         "preferred_temp_range": profile.preferred_temp_range,
         "airfare_budget_soft": profile.airfare_budget_soft,
         "airfare_budget_hard": profile.airfare_budget_hard,

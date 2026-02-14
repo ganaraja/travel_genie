@@ -2,13 +2,38 @@
 
 ## Introduction
 
-This document specifies requirements for improving the Travel Genie AI Travel Recommendation System. The system currently provides travel recommendations by coordinating user profiles, weather forecasts, flight searches, and hotel searches through a Google ADK agent. These improvements focus on enhancing the agent's reasoning capabilities, improving tool integration architecture, refining core scoring algorithms, and enhancing the user experience through better synthesis and frontend presentation.
+This document specifies requirements for the Travel Genie AI Travel Recommendation System improvements that have been implemented and are planned. The system provides travel recommendations by coordinating user profiles, weather forecasts, flight searches, and hotel searches through a Google ADK agent with a React frontend.
+
+**Status**: This spec has been updated to reflect completed work (Tasks 1-6 from context transfer) and remaining planned improvements.
+
+**Completed Features**:
+
+- Citizenship-based visa checking
+- Comprehensive test suite (backend and frontend)
+- Support for 40+ destinations including 30+ Indian cities
+- Always show top 3 flight and hotel options
+- Destination-specific output display
+
+**Planned Improvements** (Hybrid Approach - Option 3):
+
+- Basic multi-factor scoring (without MCP infrastructure)
+- Real API integrations (weather, flights, hotels)
+- Frontend profile editing
+- Property-based tests for critical paths
+- Improved error handling and loading states
+- Better recommendation quality with enhanced heuristics
 
 ## Glossary
 
 - **Agent**: The Google ADK coordinator that orchestrates reasoning and tool calls
-- **Tool**: A FastMCP-wrapped function that provides data or performs actions
-- **MCP_Server**: The FastMCP server that exposes tools via the Model Context Protocol
+- **Tool**: A function that provides data or performs actions (user profile, weather, flights, hotels)
+- **Core_Logic**: Pure Python business logic in the core/ module
+- **User_Profile**: Structured data containing user preferences and constraints
+- **Scoring_Algorithm**: Logic that evaluates and ranks travel options
+- **Property_Test**: A test that validates universal properties across many inputs
+- **Frontend**: The React-based user interface
+- **API_Integration**: Connection to real external APIs (weather, flights, hotels)
+- **Heuristic**: A practical rule or algorithm for making decisions
 - **MCP_Client**: Client code that calls tools through the MCP protocol
 - **Core_Logic**: Pure Python business logic in the core/ module
 - **Epistemic_Reflection**: The agent's explicit recognition of what it doesn't know
@@ -18,181 +43,184 @@ This document specifies requirements for improving the Travel Genie AI Travel Re
 - **Property_Test**: A test that validates universal properties across many inputs
 - **Frontend**: The React-based user interface
 
-## Requirements
+## Completed Requirements
 
-### Requirement 1: Enhanced Epistemic Reflection
+### Requirement C1: Citizenship-Based Visa Checking
 
-**User Story:** As a user, I want the agent to explicitly recognize when my question is underspecified, so that I understand why it needs to gather more information before answering.
+**User Story:** As a user, I want the system to check visa requirements based on my citizenship before showing flight options, so that I don't book non-refundable flights without proper travel authorization.
 
-#### Acceptance Criteria
-
-1. WHEN a user asks a travel question, THE Agent SHALL explicitly state what information is missing before calling any tools
-2. WHEN the Agent identifies missing information, THE Agent SHALL explain why each piece of information is necessary for the recommendation
-3. WHEN the Agent retrieves the User_Profile, THE Agent SHALL acknowledge how this information will inform subsequent reasoning
-4. THE Agent SHALL demonstrate epistemic reflection in its output, not just in internal instructions
-
-### Requirement 2: MCP-Based Tool Integration
-
-**User Story:** As a system architect, I want tools to be called through the MCP protocol, so that the agent and tools are properly decoupled and can run as separate processes.
+**Status**: ✅ COMPLETED
 
 #### Acceptance Criteria
 
-1. WHEN the Agent needs to call a tool, THE Agent SHALL use MCP_Client calls instead of direct function imports
-2. THE MCP_Server SHALL run as a separate process from the Agent
-3. WHEN the MCP_Server starts, THE MCP_Server SHALL register all available tools
-4. WHEN a tool is called via MCP_Client, THE MCP_Client SHALL serialize requests and deserialize responses according to the MCP protocol
-5. THE Agent SHALL NOT import tool implementations directly from the tools module
+1. ✅ WHEN a user queries about a destination, THE system SHALL retrieve the user's citizenship from their profile
+2. ✅ WHEN checking visa requirements, THE system SHALL use citizenship (not booking location) to determine requirements
+3. ✅ WHEN a visa is required, THE system SHALL display visa information BEFORE flight and hotel options
+4. ✅ WHEN a full visa is required, THE system SHALL recommend obtaining the visa before booking
+5. ✅ THE system SHALL support multiple visa types: visa-free, visa waiver, e-visa, visa on arrival, ESTA, and full visa
+6. ✅ THE system SHALL provide processing time, cost, and maximum stay information for each visa type
 
-### Requirement 3: Holistic Scoring Algorithms
+### Requirement C2: Comprehensive Test Coverage
 
-**User Story:** As a user, I want travel options to be scored considering all factors together, so that recommendations reflect realistic trade-offs rather than isolated criteria.
+**User Story:** As a developer, I want comprehensive test coverage for all functionality, so that I can confidently make changes without breaking existing features.
 
-#### Acceptance Criteria
-
-1. WHEN scoring a travel option, THE Scoring_Algorithm SHALL consider weather, price, schedule, and user preferences simultaneously
-2. WHEN multiple factors conflict, THE Scoring_Algorithm SHALL apply weighted trade-offs based on User_Profile priorities
-3. WHEN calculating a final score, THE Scoring_Algorithm SHALL normalize individual factor scores to a common scale
-4. THE Scoring_Algorithm SHALL produce scores that are monotonic with respect to user preference satisfaction
-
-### Requirement 4: Sophisticated Weather Analysis
-
-**User Story:** As a user with temperature preferences, I want weather analysis to match my preferred temperature range, so that recommendations align with my comfort level.
+**Status**: ✅ COMPLETED
 
 #### Acceptance Criteria
 
-1. WHEN analyzing weather, THE Core_Logic SHALL compare forecast temperatures against the User_Profile preferred temperature range
-2. WHEN temperatures fall outside the preferred range, THE Core_Logic SHALL penalize the score proportionally to the deviation
-3. WHEN storm risks are present, THE Core_Logic SHALL apply severity-weighted penalties for safety-conscious users
-4. THE Core_Logic SHALL identify optimal weather windows that maximize temperature match and minimize storm risk
+1. ✅ THE system SHALL have separate test folders for backend (Python/Pytest) and frontend (React/Jest)
+2. ✅ THE backend tests SHALL cover visa checking, coordinator, API server, and integration scenarios (86+ tests)
+3. ✅ THE frontend tests SHALL cover App, ChatMessage, ChatInput, and travelAgentService components (130+ tests)
+4. ✅ THE system SHALL include test documentation explaining how to run tests
+5. ✅ ALL tests SHALL pass successfully
 
-### Requirement 5: Advanced Flight Scoring
+### Requirement C3: Extensive Destination Support
 
-**User Story:** As a flexible traveler, I want flight scoring to properly weigh schedule flexibility, so that I can take advantage of better prices on off-peak times.
+**User Story:** As a user, I want to ask about many different destinations, so that I can get recommendations for any city I'm interested in visiting.
 
-#### Acceptance Criteria
-
-1. WHEN scoring flights, THE Scoring_Algorithm SHALL reward options that exploit user flexibility (weekday, red-eye)
-2. WHEN comparing flight prices, THE Scoring_Algorithm SHALL distinguish between soft budget (preferred) and hard budget (absolute limit)
-3. WHEN a flight exceeds the soft budget but is within the hard budget, THE Scoring_Algorithm SHALL apply a graduated penalty
-4. WHEN a flight exceeds the hard budget, THE Scoring_Algorithm SHALL exclude it from consideration
-5. THE Scoring_Algorithm SHALL consider total trip duration and layovers in the overall flight score
-
-### Requirement 6: Nuanced Hotel Scoring
-
-**User Story:** As a hotel guest with brand loyalty, I want hotel scoring to recognize trade-offs between price, comfort, and risk, so that recommendations reflect my priorities.
+**Status**: ✅ COMPLETED
 
 #### Acceptance Criteria
 
-1. WHEN scoring hotels, THE Scoring_Algorithm SHALL reward preferred brands from the User_Profile
-2. WHEN hotel pricing is anomalous, THE Scoring_Algorithm SHALL flag the anomaly and explain the reason
-3. WHEN anomalous pricing is due to storm risk, THE Scoring_Algorithm SHALL weigh the price benefit against safety concerns for safety-conscious users
-4. WHEN hotel rates fall within the User_Profile budget range, THE Scoring_Algorithm SHALL score them favorably
-5. THE Scoring_Algorithm SHALL consider hotel rating as a comfort factor in the overall score
+1. ✅ THE system SHALL support 40+ destinations worldwide
+2. ✅ THE system SHALL include 30+ Indian cities (metros, tourist destinations, and regional cities)
+3. ✅ THE system SHALL map destination names to correct airport codes
+4. ✅ THE system SHALL display destination-specific information in weather, flights, and hotels
+5. ✅ THE frontend SHALL include example queries for major destinations including India
 
-### Requirement 7: Enhanced Recommendation Synthesis
+### Requirement C4: Top Options Display
 
-**User Story:** As a user, I want recommendations to include nuanced explanations, so that I understand the reasoning behind each suggestion and why alternatives were rejected.
+**User Story:** As a user, I want to always see the top 3 flight and hotel options even if they don't match my preferences, so that I can make informed decisions about trade-offs.
 
-#### Acceptance Criteria
-
-1. WHEN synthesizing a recommendation, THE Agent SHALL provide explicit reasoning for each factor (weather, price, schedule, comfort)
-2. WHEN presenting alternatives, THE Agent SHALL explain what makes each alternative different from the primary recommendation
-3. WHEN rejecting time periods, THE Agent SHALL explicitly state why each period was rejected
-4. WHEN trade-offs exist, THE Agent SHALL acknowledge them and explain how they were resolved based on User_Profile priorities
-5. THE Agent SHALL present recommendations in clear, human-readable language without technical jargon
-
-### Requirement 8: Multi-Stage Reasoning Display
-
-**User Story:** As a user, I want to see the agent's decision process, so that I can understand how it arrived at its recommendation.
+**Status**: ✅ COMPLETED
 
 #### Acceptance Criteria
 
-1. WHEN the Agent performs epistemic reflection, THE Frontend SHALL display the identified missing information
-2. WHEN the Agent calls a tool, THE Frontend SHALL show which tool was called and a summary of the response
-3. WHEN the Agent reasons about data, THE Frontend SHALL display the reasoning steps in chronological order
-4. WHEN the Agent synthesizes a recommendation, THE Frontend SHALL highlight the key factors that influenced the decision
-5. THE Frontend SHALL provide a visual timeline or flowchart of the agent's workflow stages
+1. ✅ THE system SHALL always display top 3 flight options regardless of budget match
+2. ✅ THE system SHALL always display top 3 hotel options regardless of budget match
+3. ✅ EACH option SHALL include detailed information: price, dates, duration, layovers, rating
+4. ✅ EACH option SHALL include clear budget indicators: ✓ Within budget, ⚠️ Over soft budget, ⚠️ Outside budget
+5. ✅ THE system SHALL show special markers: ⭐ Preferred brand, 💰 Special pricing
+6. ✅ THE recommendation SHALL include budget considerations and guidance even when over budget
 
-### Requirement 9: Alternative Options Presentation
+## Planned Requirements (Hybrid Approach)
 
-**User Story:** As a user considering multiple options, I want to see alternative travel periods and why some were rejected, so that I can make an informed decision.
+### Requirement 1: Basic Multi-Factor Scoring
 
-#### Acceptance Criteria
-
-1. WHEN displaying recommendations, THE Frontend SHALL show the primary recommendation prominently
-2. WHEN alternative options exist, THE Frontend SHALL display them with brief explanations of their differences
-3. WHEN periods were rejected, THE Frontend SHALL list them with clear rejection reasons
-4. WHEN comparing options, THE Frontend SHALL provide a side-by-side comparison view
-5. THE Frontend SHALL allow users to expand details for any option or rejected period
-
-### Requirement 10: User Profile Management
-
-**User Story:** As a user, I want to view and edit my travel preferences, so that recommendations are personalized to my current needs.
+**User Story:** As a user, I want travel options to be scored considering multiple factors, so that recommendations reflect realistic trade-offs.
 
 #### Acceptance Criteria
 
-1. WHEN a user accesses the profile page, THE Frontend SHALL display all User_Profile fields in an editable form
-2. WHEN a user updates profile fields, THE Frontend SHALL validate the input before submission
-3. WHEN profile updates are submitted, THE Frontend SHALL call the appropriate tool to persist changes
+1. WHEN scoring a travel option, THE Scoring_Algorithm SHALL consider weather, price, and schedule factors
+2. WHEN calculating scores, THE Scoring_Algorithm SHALL normalize scores to a common scale (0.0-1.0)
+3. WHEN multiple options exist, THE Scoring_Algorithm SHALL rank them by combined score
+4. THE Scoring_Algorithm SHALL provide explanation text for each score
+5. THE Scoring_Algorithm SHALL be implemented in core/scoring.py without external dependencies
+
+### Requirement 2: Real Weather API Integration
+
+**User Story:** As a user, I want real weather forecasts, so that recommendations are based on actual conditions.
+
+#### Acceptance Criteria
+
+1. WHEN requesting weather data, THE system SHALL call a real weather API (OpenWeatherMap or similar)
+2. WHEN the API call fails, THE system SHALL fall back to mock data with a warning message
+3. WHEN displaying weather, THE system SHALL show temperature, conditions, and precipitation
+4. THE system SHALL cache weather data for 1 hour to reduce API calls
+5. THE system SHALL handle API rate limits gracefully
+
+### Requirement 3: Real Flight API Integration
+
+**User Story:** As a user, I want real flight prices and availability, so that I can make actual bookings.
+
+#### Acceptance Criteria
+
+1. WHEN searching flights, THE system SHALL call a real flight API (Amadeus, Skyscanner, or similar)
+2. WHEN the API call fails, THE system SHALL fall back to mock data with a warning message
+3. WHEN displaying flights, THE system SHALL show actual airlines, prices, and times
+4. THE system SHALL cache flight data for 15 minutes to reduce API calls
+5. THE system SHALL handle API rate limits and errors gracefully
+
+### Requirement 4: Real Hotel API Integration
+
+**User Story:** As a user, I want real hotel prices and availability, so that I can make actual bookings.
+
+#### Acceptance Criteria
+
+1. WHEN searching hotels, THE system SHALL call a real hotel API (Booking.com, Hotels.com, or similar)
+2. WHEN the API call fails, THE system SHALL fall back to mock data with a warning message
+3. WHEN displaying hotels, THE system SHALL show actual properties, prices, and ratings
+4. THE system SHALL cache hotel data for 1 hour to reduce API calls
+5. THE system SHALL handle API rate limits and errors gracefully
+
+### Requirement 5: Frontend Profile Editing
+
+**User Story:** As a user, I want to edit my travel preferences in the UI, so that recommendations are personalized.
+
+#### Acceptance Criteria
+
+1. WHEN accessing the profile page, THE Frontend SHALL display all User_Profile fields in an editable form
+2. WHEN updating profile fields, THE Frontend SHALL validate input before submission
+3. WHEN profile updates are submitted, THE Frontend SHALL call the API to persist changes
 4. WHEN profile updates succeed, THE Frontend SHALL display a confirmation message
-5. THE Frontend SHALL provide helpful descriptions for each profile field to guide user input
+5. THE Frontend SHALL provide helpful descriptions for each profile field
 
-### Requirement 11: Comprehensive Core Logic Testing
+### Requirement 6: Enhanced Error Handling
 
-**User Story:** As a developer, I want comprehensive tests for core logic, so that I can confidently refactor and extend the system.
-
-#### Acceptance Criteria
-
-1. WHEN testing scoring algorithms, THE Property_Test SHALL validate that scores are monotonic with respect to preference satisfaction
-2. WHEN testing weather analysis, THE Property_Test SHALL validate that temperature matching correctly identifies optimal windows
-3. WHEN testing flight scoring, THE Property_Test SHALL validate that budget constraints are properly enforced
-4. WHEN testing hotel scoring, THE Property_Test SHALL validate that brand preferences and anomaly detection work correctly
-5. THE Property_Test SHALL run at least 100 iterations per property to ensure comprehensive coverage
-
-### Requirement 12: Tool-Agent Integration Testing
-
-**User Story:** As a developer, I want integration tests for tool-agent interaction, so that I can verify the MCP protocol integration works correctly.
+**User Story:** As a user, I want clear error messages, so that I understand what went wrong and how to fix it.
 
 #### Acceptance Criteria
 
-1. WHEN testing tool calls, THE integration test SHALL start the MCP_Server and MCP_Client
-2. WHEN the Agent calls a tool via MCP_Client, THE integration test SHALL verify the request is properly serialized
-3. WHEN the MCP_Server responds, THE integration test SHALL verify the response is properly deserialized
-4. WHEN tool calls fail, THE integration test SHALL verify error handling works correctly
-5. THE integration test SHALL verify all tools are properly registered with the MCP_Server
+1. WHEN an API call fails, THE system SHALL display a user-friendly error message
+2. WHEN validation fails, THE system SHALL show specific field-level errors
+3. WHEN the system is loading, THE Frontend SHALL show loading indicators
+4. WHEN errors occur, THE system SHALL log detailed information for debugging
+5. THE system SHALL provide retry options for transient failures
 
-### Requirement 13: Frontend Component Testing
+### Requirement 7: Property-Based Tests for Critical Paths
 
-**User Story:** As a frontend developer, I want tests for all UI components, so that I can ensure the interface works correctly across different scenarios.
-
-#### Acceptance Criteria
-
-1. WHEN testing the reasoning display component, THE test SHALL verify all workflow stages are rendered correctly
-2. WHEN testing the alternatives component, THE test SHALL verify options and rejected periods are displayed properly
-3. WHEN testing the profile management component, THE test SHALL verify form validation and submission work correctly
-4. WHEN testing the comparison view, THE test SHALL verify side-by-side option display is accurate
-5. THE test SHALL verify all interactive elements (buttons, forms, expandable sections) respond correctly to user actions
-
-### Requirement 14: Documentation Updates
-
-**User Story:** As a new developer or user, I want comprehensive documentation, so that I can understand how to set up, use, and extend the system.
+**User Story:** As a developer, I want property-based tests for critical functionality, so that edge cases are caught.
 
 #### Acceptance Criteria
 
-1. WHEN reading the README, THE documentation SHALL include step-by-step MCP_Server setup instructions
-2. WHEN integrating external APIs, THE documentation SHALL provide an API integration guide with examples
-3. WHEN deploying the system, THE documentation SHALL include deployment instructions for common platforms
-4. WHEN troubleshooting issues, THE documentation SHALL provide a troubleshooting section with common problems and solutions
-5. THE documentation SHALL include architecture diagrams showing the MCP-based tool integration
+1. WHEN testing visa checking, THE Property_Test SHALL validate all citizenship/destination combinations
+2. WHEN testing scoring, THE Property_Test SHALL validate score normalization (0.0-1.0 range)
+3. WHEN testing data serialization, THE Property_Test SHALL validate round-trip equivalence
+4. WHEN testing budget constraints, THE Property_Test SHALL validate soft/hard budget enforcement
+5. THE Property_Test SHALL run at least 100 iterations per property
 
-### Requirement 15: Round-Trip Property Testing
+### Requirement 8: Improved Recommendation Quality
 
-**User Story:** As a developer, I want round-trip property tests for data serialization, so that I can ensure data integrity across the MCP protocol boundary.
+**User Story:** As a user, I want better recommendations, so that suggestions match my preferences more closely.
 
 #### Acceptance Criteria
 
-1. WHEN serializing User_Profile data, THE Property_Test SHALL verify that deserializing produces an equivalent object
-2. WHEN serializing tool requests, THE Property_Test SHALL verify that deserializing produces an equivalent request
-3. WHEN serializing tool responses, THE Property_Test SHALL verify that deserializing produces an equivalent response
-4. FOR ALL valid data objects, serializing then deserializing SHALL produce an equivalent object
-5. THE Property_Test SHALL test serialization with edge cases (empty lists, null values, boundary values)
+1. WHEN analyzing weather, THE system SHALL compare temperatures against user preferences
+2. WHEN scoring flights, THE system SHALL reward weekday and red-eye options for flexible users
+3. WHEN scoring hotels, THE system SHALL reward preferred brands
+4. WHEN synthesizing recommendations, THE system SHALL explain trade-offs clearly
+5. THE system SHALL provide 2-3 alternative options with explanations
+
+### Requirement 9: API Configuration Management
+
+**User Story:** As a developer, I want easy API configuration, so that I can switch between mock and real APIs.
+
+#### Acceptance Criteria
+
+1. WHEN configuring APIs, THE system SHALL use environment variables for API keys
+2. WHEN an API key is missing, THE system SHALL fall back to mock data automatically
+3. WHEN in development mode, THE system SHALL allow using mock data explicitly
+4. THE system SHALL provide clear documentation for API setup
+5. THE system SHALL validate API keys on startup and warn if invalid
+
+### Requirement 10: Performance Optimization
+
+**User Story:** As a user, I want fast responses, so that I can get recommendations quickly.
+
+#### Acceptance Criteria
+
+1. WHEN making API calls, THE system SHALL use caching to reduce redundant requests
+2. WHEN multiple APIs are needed, THE system SHALL call them in parallel where possible
+3. WHEN displaying results, THE Frontend SHALL show partial results as they arrive
+4. THE system SHALL complete most queries in under 5 seconds
+5. THE system SHALL provide progress indicators for long-running operations

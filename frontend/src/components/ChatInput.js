@@ -10,8 +10,10 @@ function ChatInput({ onSend, disabled, userId }) {
     "When should I visit Paris?",
     "Should I go to Tokyo next month?",
     "Best time for Bali vacation?",
+    "When should I visit Bangalore?",
+    "Should I go to Mumbai or Delhi?",
     "What's the weather like in Tokyo in March?",
-    "Find me cheap flights to Europe"
+    "Find me cheap flights to India"
   ];
 
   useEffect(() => {

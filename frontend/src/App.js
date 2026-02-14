@@ -8,8 +8,8 @@ function App() {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      type: 'assistant',
-      content: "👋 Hi! I'm Travel Genie, your AI travel assistant. I can help you find the perfect time and place for your next trip.\n\nI'll analyze weather patterns, flight options, hotel availability, and your personal preferences to give you personalized recommendations.\n\nWhat destination are you thinking about?",
+      type: 'welcome',
+      content: "Welcome to Travel Genie",
       timestamp: new Date().toISOString()
     }
   ]);
@@ -18,7 +18,9 @@ function App() {
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current && typeof messagesEndRef.current.scrollIntoView === 'function') {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
@@ -69,8 +71,8 @@ function App() {
     setMessages([
       {
         id: 1,
-        type: 'assistant',
-        content: "Chat cleared! What would you like to know about your next trip?",
+        type: 'welcome',
+        content: "Welcome to Travel Genie",
         timestamp: new Date().toISOString()
       }
     ]);
@@ -81,8 +83,13 @@ function App() {
       <header className="App-header">
         <div className="header-content">
           <div className="header-left">
-            <h1>🌴 Travel Genie</h1>
-            <p>AI-Powered Travel Assistant</p>
+            <div className="logo-container">
+              <div className="logo-icon">✈️🌴🏖️</div>
+              <div className="logo-text">
+                <h1>Travel Genie</h1>
+                <p>AI-Powered Travel Planning</p>
+              </div>
+            </div>
           </div>
           <div className="header-right">
             <select
@@ -91,15 +98,15 @@ function App() {
               className="user-select"
               disabled={loading}
             >
-              <option value="user_123">👤 Comfort Traveler</option>
-              <option value="default">👤 Standard Traveler</option>
+              <option value="user_123">👤 Comfort Traveler (USA)</option>
+              <option value="default">👤 Standard Traveler (USA)</option>
             </select>
             <button 
               onClick={handleClearChat}
               className="clear-button"
               disabled={loading}
             >
-              🗑️ Clear Chat
+              <span>🗑️</span> Clear Chat
             </button>
           </div>
         </div>
@@ -109,7 +116,35 @@ function App() {
         <div className="chat-container">
           <div className="messages-container">
             {messages.map((message) => (
-              <ChatMessage key={message.id} message={message} />
+              message.type === 'welcome' ? (
+                <div key={message.id} className="welcome-banner">
+                  <h2>🌍 Plan Your Perfect Trip with AI</h2>
+                  <p>
+                    Get personalized travel recommendations in seconds. I'll analyze weather, 
+                    flights, hotels, and visa requirements based on your preferences.
+                  </p>
+                  <div className="features-grid">
+                    <div className="feature-item">
+                      <div className="feature-item-icon">🛂</div>
+                      <div className="feature-item-text">Visa Checking</div>
+                    </div>
+                    <div className="feature-item">
+                      <div className="feature-item-icon">🌤️</div>
+                      <div className="feature-item-text">Weather Analysis</div>
+                    </div>
+                    <div className="feature-item">
+                      <div className="feature-item-icon">✈️</div>
+                      <div className="feature-item-text">Flight Deals</div>
+                    </div>
+                    <div className="feature-item">
+                      <div className="feature-item-icon">🏨</div>
+                      <div className="feature-item-text">Hotel Matches</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <ChatMessage key={message.id} message={message} />
+              )
             ))}
             {loading && (
               <div className="loading-message">

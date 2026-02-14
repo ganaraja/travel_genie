@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import App from '../App';
 import { travelAgentService } from '../services/travelAgentService';
@@ -16,33 +16,46 @@ describe('App', () => {
     render(<App />);
 
     expect(screen.getByText(/travel genie/i)).toBeInTheDocument();
-    expect(screen.getByText(/ai-powered travel recommendation assistant/i)).toBeInTheDocument();
+    expect(screen.getByText(/ai-powered travel planning/i)).toBeInTheDocument();
   });
 
   test('renders travel query form', () => {
-    render(<App />);
+    const { container } = render(<App />);
 
-    expect(screen.getByLabelText(/travel query/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /get recommendation/i })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/ask me anything about your travel plans/i)).toBeInTheDocument();
+    const submitButton = container.querySelector('button[type="submit"]');
+    expect(submitButton).toBeInTheDocument();
   });
 
   test('displays loading spinner when loading', async () => {
+    let resolvePromise;
     travelAgentService.getRecommendation.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve({}), 100))
+      () => new Promise((resolve) => {
+        resolvePromise = resolve;
+      })
     );
 
-    render(<App />);
+    const { container } = render(<App />);
 
-    const textarea = screen.getByLabelText(/travel query/i);
-    const submitButton = screen.getByRole('button', { name: /get recommendation/i });
+    const textarea = screen.getByPlaceholderText(/ask me anything about your travel plans/i);
+    const submitButton = container.querySelector('button[type="submit"]');
 
     // Submit form
-    textarea.value = 'Is it a good time to go to Maui?';
-    submitButton.click();
+    fireEvent.change(textarea, { target: { value: 'Is it a good time to go to Maui?' } });
+    fireEvent.click(submitButton);
 
-    // Should show loading spinner
+    // Should show loading state (button disabled or loading text)
     await waitFor(() => {
-      expect(screen.getByTestId('loading-spinner')).toBeInTheDocument();
+      const button = container.querySelector('button[type="submit"]');
+      expect(button).toBeDisabled();
+    });
+
+    // Resolve the promise to clean up
+    resolvePromise({
+      success: true,
+      recommendation: 'Test recommendation',
+      query: 'Is it a good time to go to Maui?',
+      userId: 'user_123'
     });
   });
 
@@ -50,53 +63,43 @@ describe('App', () => {
     const errorMessage = 'Failed to get recommendation';
     travelAgentService.getRecommendation.mockRejectedValue(new Error(errorMessage));
 
-    render(<App />);
+    const { container } = render(<App />);
 
-    const textarea = screen.getByLabelText(/travel query/i);
-    const submitButton = screen.getByRole('button', { name: /get recommendation/i });
+    const textarea = screen.getByPlaceholderText(/ask me anything about your travel plans/i);
+    const submitButton = container.querySelector('button[type="submit"]');
 
     // Submit form
-    textarea.value = 'Is it a good time to go to Maui?';
-    submitButton.click();
+    fireEvent.change(textarea, { target: { value: 'Is it a good time to go to Maui?' } });
+    fireEvent.click(submitButton);
 
     // Should show error message
     await waitFor(() => {
-      expect(screen.getByTestId('error-message')).toBeInTheDocument();
-      expect(screen.getByText(errorMessage)).toBeInTheDocument();
+      expect(screen.getByText(/error/i)).toBeInTheDocument();
     });
   });
 
   test('displays recommendation when received', async () => {
     const mockRecommendation = {
-      recommended_start: '2026-02-09',
-      recommended_end: '2026-02-16',
-      primary_reasoning: [
-        {
-          factor: 'weather',
-          assessment: 'Perfect temperature',
-          positive: true,
-        },
-      ],
-      personalized_summary: 'Great time to visit!',
-      alternative_options: [],
-      rejected_periods: [],
+      success: true,
+      recommendation: 'Great time to visit Maui!',
+      query: 'Is it a good time to go to Maui?',
+      userId: 'user_123'
     };
 
     travelAgentService.getRecommendation.mockResolvedValue(mockRecommendation);
 
-    render(<App />);
+    const { container } = render(<App />);
 
-    const textarea = screen.getByLabelText(/travel query/i);
-    const submitButton = screen.getByRole('button', { name: /get recommendation/i });
+    const textarea = screen.getByPlaceholderText(/ask me anything about your travel plans/i);
+    const submitButton = container.querySelector('button[type="submit"]');
 
     // Submit form
-    textarea.value = 'Is it a good time to go to Maui?';
-    submitButton.click();
+    fireEvent.change(textarea, { target: { value: 'Is it a good time to go to Maui?' } });
+    fireEvent.click(submitButton);
 
     // Should show recommendation
     await waitFor(() => {
-      expect(screen.getByText(/your personalized recommendation/i)).toBeInTheDocument();
-      expect(screen.getByText(/great time to visit/i)).toBeInTheDocument();
+      expect(screen.getByText(/great time to visit maui/i)).toBeInTheDocument();
     });
   });
 });

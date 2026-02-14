@@ -39,12 +39,5 @@
     "@types/jest": "^29.5.11",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18"
-  },
-  "jest": {
-    "testEnvironment": "jsdom",
-    "setupFilesAfterEnv": ["<rootDir>/src/setupTests.js"],
-    "moduleNameMapper": {
-      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
-    }
   }
 }

@@ -27,18 +27,24 @@ class ComfortLevel(Enum):
 class UserProfile:
     """User travel preferences and constraints."""
     user_id: str
-    preferred_temp_range: tuple[float, float]  # (min, max) in Fahrenheit
-    airfare_budget_soft: float  # Preferred max in USD
-    airfare_budget_hard: float  # Absolute max in USD
-    hotel_budget_min: float  # Min nightly rate in USD
-    hotel_budget_max: float  # Max nightly rate in USD
-    preferred_brands: List[str]  # e.g., ["Marriott", "Hilton"]
-    typical_trip_length_days: int
-    comfort_level: ComfortLevel
-    flexibility_days: int  # How many days +/- they can shift
-    safety_conscious: bool
-    visa_required: bool = False
+    citizenship: str = "USA"  # Country of citizenship for visa requirements
+    passport_country: str = "USA"  # Passport issuing country
+    preferred_temp_range: tuple[float, float] = (70.0, 80.0)  # (min, max) in Fahrenheit
+    airfare_budget_soft: float = 500.0  # Preferred max in USD
+    airfare_budget_hard: float = 800.0  # Absolute max in USD
+    hotel_budget_min: float = 100.0  # Min nightly rate in USD
+    hotel_budget_max: float = 250.0  # Max nightly rate in USD
+    preferred_brands: List[str] = None  # e.g., ["Marriott", "Hilton"]
+    typical_trip_length_days: int = 7
+    comfort_level: ComfortLevel = ComfortLevel.STANDARD
+    flexibility_days: int = 3  # How many days +/- they can shift
+    safety_conscious: bool = False
+    visa_required: bool = False  # Legacy field
     notes: Optional[str] = None
+    
+    def __post_init__(self):
+        if self.preferred_brands is None:
+            self.preferred_brands = []
 
 
 @dataclass
